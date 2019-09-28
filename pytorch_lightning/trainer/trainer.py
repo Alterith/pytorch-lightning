@@ -134,6 +134,9 @@ class Trainer(TrainerIO):
 
         # training bookeeping
         self.total_batch_nb = 0
+        # added by @Alterith
+        self.acc_1 = 0
+        self.acc_5 = 0
         self.running_loss = []
         self.avg_loss = 0
         self.batch_nb = 0
@@ -415,9 +418,12 @@ class Trainer(TrainerIO):
     @property
     def __training_tqdm_dict(self):
         tqdm_dict = {
-            'loss': '{0:.3f}'.format(self.avg_loss),
+            'acc@1': '{0:.3f}'.format(self.acc_1),
+            'acc@5': '{0:.3f}'.format(self.acc_5),
+            'loss': '{0:.7f}'.format(self.avg_loss),
             'epoch': '{}'.format(self.current_epoch),
             'batch_nb': '{}'.format(self.batch_nb),
+
         }
 
         if self.logger is not None and self.logger.version is not None:
@@ -1155,15 +1161,19 @@ class Trainer(TrainerIO):
         # then assume the output=loss if scalar
         try:
             loss = output['loss']
+            acc_1 = output['acc_1']
+            acc_5 = output['acc_5']
         except Exception:
             if type(output) is torch.Tensor:
                 loss = output
+                acc_1 = -1
+                acc_5 = -1
 
         # when using dp need to reduce the loss
         if self.use_dp:
             loss = reduce_distributed_output(loss, self.num_gpus)
 
-        return loss, model_specific_tqdm_metrics_dic
+        return loss, acc_1, acc_5, model_specific_tqdm_metrics_dic
 
     def __clip_gradients(self):
         if self.gradient_clip_val > 0:
@@ -1195,7 +1205,7 @@ class Trainer(TrainerIO):
         for opt_idx, optimizer in enumerate(self.optimizers):
 
             # forward pass
-            loss, model_specific_tqdm_metrics = self.__training_forward(batch, batch_nb, opt_idx)
+            loss, acc_1, acc_5, model_specific_tqdm_metrics = self.__training_forward(batch, batch_nb, opt_idx)
 
             # track metrics
             self.__add_tqdm_metrics(model_specific_tqdm_metrics)
@@ -1237,6 +1247,8 @@ class Trainer(TrainerIO):
                 self.running_loss.append(self.batch_loss_value)
                 self.batch_loss_value = 0
                 self.avg_loss = np.mean(self.running_loss[-100:])
+                self.acc_1 = acc_1
+                self.acc_5 = acc_5
 
                 # update progressbar
                 if self.show_progress_bar:
