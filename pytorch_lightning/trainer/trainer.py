@@ -1168,6 +1168,16 @@ class Trainer(TrainerIO):
                 loss = output
                 acc_1 = -1
                 acc_5 = -1
+        try:
+            acc_1 = output['acc_1']
+        except Exception:
+            if type(output) is torch.Tensor:
+                acc_1 = -1
+        try:
+            acc_5 = output['acc_5']
+        except Exception:
+            if type(output) is torch.Tensor:
+                acc_5 = -1
 
         # when using dp need to reduce the loss
         if self.use_dp:
