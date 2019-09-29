@@ -1260,9 +1260,9 @@ class Trainer(TrainerIO):
                 self.batch_loss_value = 0
                 self.avg_loss = np.mean(self.running_loss[-100:])
                 self.running_acc_1.append(acc_1)
-                self.avg_acc_1 = np.mean(self.running_acc_1])
+                self.avg_acc_1 = np.mean(self.running_acc_1)
                 self.running_acc_5.append(acc_5)
-                self.avg_acc_5 = np.mean(self.running_acc_5])
+                self.avg_acc_5 = np.mean(self.running_acc_5)
 
                 # update progressbar
                 if self.show_progress_bar:
