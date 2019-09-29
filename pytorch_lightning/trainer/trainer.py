@@ -135,8 +135,10 @@ class Trainer(TrainerIO):
         # training bookeeping
         self.total_batch_nb = 0
         # added by @Alterith
-        self.acc_1 = 0
-        self.acc_5 = 0
+        self.running_acc_1 = []
+        self.avg_acc_1 = 0
+        self.running_acc_5 = []
+        self.avg_acc_5 = 0
         self.running_loss = []
         self.avg_loss = 0
         self.batch_nb = 0
@@ -418,8 +420,8 @@ class Trainer(TrainerIO):
     @property
     def __training_tqdm_dict(self):
         tqdm_dict = {
-            'acc@1': '{0:.3f}'.format(self.acc_1),
-            'acc@5': '{0:.3f}'.format(self.acc_5),
+            'acc@1': '{0:.7f}'.format(self.avg_acc_1),
+            'acc@5': '{0:.7f}'.format(self.avg_acc_5),
             'loss': '{0:.7f}'.format(self.avg_loss),
             'epoch': '{}'.format(self.current_epoch),
             'batch_nb': '{}'.format(self.batch_nb),
@@ -1257,8 +1259,10 @@ class Trainer(TrainerIO):
                 self.running_loss.append(self.batch_loss_value)
                 self.batch_loss_value = 0
                 self.avg_loss = np.mean(self.running_loss[-100:])
-                self.acc_1 = acc_1
-                self.acc_5 = acc_5
+                self.running_acc_1.append(acc_1)
+                self.avg_acc_1 = np.mean(self.running_acc_1])
+                self.running_acc_5.append(acc_5)
+                self.avg_acc_5 = np.mean(self.running_acc_5])
 
                 # update progressbar
                 if self.show_progress_bar:
